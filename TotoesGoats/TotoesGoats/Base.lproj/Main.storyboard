@@ -3,6 +3,7 @@
     <dependencies>
         <deployment identifier="iOS"/>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="9530"/>
+        <capability name="Constraints to layout margins" minToolsVersion="6.0"/>
     </dependencies>
     <scenes>
         <!--View Controller-->
@@ -17,30 +18,57 @@
                         <rect key="frame" x="0.0" y="0.0" width="600" height="600"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Tlg-Ys-QKd">
-                                <rect key="frame" x="255" y="419" width="90" height="90"/>
-                                <color key="backgroundColor" red="0.0" green="0.47843137250000001" blue="1" alpha="1" colorSpace="calibratedRGB"/>
+                            <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="PZE-1E-CjX" customClass="ACPScrollMenu">
+                                <rect key="frame" x="110" y="539" width="380" height="56"/>
+                                <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
                                 <constraints>
-                                    <constraint firstAttribute="width" constant="90" id="7QL-bJ-fdz"/>
-                                    <constraint firstAttribute="height" constant="90" id="nzM-eb-nsj"/>
+                                    <constraint firstAttribute="height" constant="100" id="058-m4-LE7"/>
+                                    <constraint firstAttribute="width" constant="380" id="let-KT-Mai"/>
+                                    <constraint firstAttribute="height" constant="56" id="sqk-Av-cN0"/>
+                                </constraints>
+                                <variation key="default">
+                                    <mask key="constraints">
+                                        <exclude reference="058-m4-LE7"/>
+                                    </mask>
+                                </variation>
+                            </view>
+                            <button opaque="NO" contentMode="scaleAspectFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="mPz-OT-AOc">
+                                <rect key="frame" x="550" y="20" width="30" height="30"/>
+                                <constraints>
+                                    <constraint firstAttribute="height" constant="30" id="aCR-DA-274"/>
+                                    <constraint firstAttribute="width" constant="30" id="o4K-Jx-GOV"/>
                                 </constraints>
                                 <connections>
-                                    <action selector="buttonClicked:" destination="BYZ-38-t0r" eventType="touchUpInside" id="PrZ-v2-dyl"/>
+                                    <action selector="switchBtnClicked:" destination="BYZ-38-t0r" eventType="touchUpInside" id="KXM-yj-rX5"/>
                                 </connections>
                             </button>
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
                         <constraints>
-                            <constraint firstItem="wfy-db-euE" firstAttribute="top" secondItem="Tlg-Ys-QKd" secondAttribute="bottom" constant="91" id="5rD-F5-Ze8"/>
-                            <constraint firstItem="Tlg-Ys-QKd" firstAttribute="centerX" secondItem="8bC-Xf-vdC" secondAttribute="centerX" id="7Gz-Y1-QmR"/>
+                            <constraint firstAttribute="trailingMargin" secondItem="mPz-OT-AOc" secondAttribute="trailing" id="LEE-PM-5R3"/>
+                            <constraint firstAttribute="trailingMargin" secondItem="PZE-1E-CjX" secondAttribute="trailing" constant="10" id="XDv-kF-hlZ"/>
+                            <constraint firstItem="wfy-db-euE" firstAttribute="top" secondItem="PZE-1E-CjX" secondAttribute="bottom" constant="5" id="arI-eo-eSd"/>
+                            <constraint firstItem="PZE-1E-CjX" firstAttribute="centerX" secondItem="8bC-Xf-vdC" secondAttribute="centerX" id="cgI-e2-14E"/>
+                            <constraint firstItem="wfy-db-euE" firstAttribute="top" secondItem="PZE-1E-CjX" secondAttribute="bottom" id="sI2-4Z-wnB"/>
+                            <constraint firstItem="PZE-1E-CjX" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leadingMargin" constant="10" id="tqc-DJ-9sd"/>
+                            <constraint firstItem="mPz-OT-AOc" firstAttribute="top" secondItem="y3c-jy-aDJ" secondAttribute="bottom" id="txV-KP-MtN"/>
                         </constraints>
+                        <variation key="default">
+                            <mask key="constraints">
+                                <exclude reference="XDv-kF-hlZ"/>
+                                <exclude reference="tqc-DJ-9sd"/>
+                                <exclude reference="sI2-4Z-wnB"/>
+                            </mask>
+                        </variation>
                     </view>
                     <connections>
-                        <outlet property="button" destination="Tlg-Ys-QKd" id="9Lt-5m-3t5"/>
+                        <outlet property="frontBackSwitchBtn" destination="mPz-OT-AOc" id="QdK-Lx-75u"/>
+                        <outlet property="scrollMenu" destination="PZE-1E-CjX" id="qnK-3Q-pa0"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>
             </objects>
+            <point key="canvasLocation" x="510" y="349"/>
         </scene>
     </scenes>
 </document>

@@ -9,28 +9,81 @@
 import UIKit
 import AVFoundation
 
-class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDelegate {
-    @IBOutlet weak var button: UIButton!
 
-    @IBAction func buttonClicked(sender: UIButton) {
-        isProcessing = !isProcessing
-        
-        if isProcessing {
-            processedLayer.hidden = false
-            previewLayer.hidden = true
-            button.backgroundColor = UIColor.greenColor()
-        } else {
-            processedLayer.hidden = true
-            previewLayer.hidden = false
-            button.backgroundColor = UIColor.redColor()
-        }
-    }
+class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDelegate{
+    
+    //    @IBAction func buttonClicked(sender: UIButton) {
+    //        isProcessing = !isProcessing
+    //
+    //        if isProcessing {
+    //            processedLayer.hidden = false
+    //            processedLayer.backgroundColor = nil // sets layer to be transparent, so we can see the video feed being shown in the preview layer
+    //            previewLayer.hidden = false
+    //            button.backgroundColor = UIColor.greenColor()
+    //        } else {
+    //            processedLayer.hidden = true
+    //            previewLayer.hidden = false
+    //            button.backgroundColor = UIColor.redColor()
+    //        }
+    //    }
     
     var session = AVCaptureSession()
     var previewLayer : AVCaptureVideoPreviewLayer!
     var processedLayer : CALayer!
     
-    var isProcessing = false
+    var backCameraOn = true
+    
+    @IBOutlet weak var scrollMenu: ACPScrollMenu!
+    @IBOutlet weak var frontBackSwitchBtn: UIButton!
+    @IBAction func switchBtnClicked(sender: UIButton) {
+        
+        backCameraOn = !backCameraOn
+        
+        //Indicate that some changes will be made to the session
+        session.beginConfiguration()
+        
+        //Remove existing input
+        let currentCameraInput = session.inputs[0] as! AVCaptureDeviceInput
+        
+        session.removeInput(currentCameraInput)
+        
+        //Get new input
+        var newCamera : AVCaptureDevice
+        let devices = AVCaptureDevice.devicesWithMediaType(AVMediaTypeVideo) as! [AVCaptureDevice]
+
+        if(currentCameraInput.device.position == .Back)
+        {
+            newCamera = devices.filter({ (dev) -> Bool in dev.position == .Front}).first!
+        }
+        else
+        {
+            newCamera = devices.first!
+        }
+        
+        let input = try! AVCaptureDeviceInput(device: newCamera)
+        
+        assert(session.canAddInput(input))
+        session.addInput(input)
+        
+        //Commit all the configuration changes at once
+        session.commitConfiguration()
+    }
+    
+    var isProcessing = true
+    var frameNo = 0
+    var faceDetector = CIDetector(ofType: CIDetectorTypeFace,
+        context: nil, options:  [
+            CIDetectorAccuracy: CIDetectorAccuracyHigh,
+            CIDetectorTracking: true
+        ]
+    )
+    
+    var itemSelected = -1;
+    
+    lazy var dogFace : UIImage! = {
+        let path = NSBundle.mainBundle().pathForResource("dog", ofType: "png")!
+        return UIImage(contentsOfFile: path)
+    }()
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -38,7 +91,13 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
         
         // Get all devices on my phone
         let devices = AVCaptureDevice.devicesWithMediaType(AVMediaTypeVideo) as! [AVCaptureDevice]
+        
         let device = devices.first!
+        //        let device = devices.filter({ (dev) -> Bool in
+        //            dev.position == .Front
+        //        }).first!
+        //let device = devices.filter({ $0.position == .Front}).first!
+        
         
         //
         let input = try! AVCaptureDeviceInput(device: device)
@@ -71,12 +130,76 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
         assert(session.canAddOutput(output))
         session.addOutput(output)
         
-        // Button
-        self.view.bringSubviewToFront(button)
-        button.layer.cornerRadius = button.frame.width / 2.0
+        //        // Button
+        //        self.view.bringSubviewToFront(button)
+        //        button.layer.cornerRadius = button.frame.width / 2.0
+        
+        processedLayer.hidden = false
+        processedLayer.backgroundColor = nil // sets layer to be transparent, so we can see the video feed being shown in the preview layer
+        previewLayer.hidden = false
+        
+        // Set the Camera Switch Button
+        frontBackSwitchBtn.setImage(UIImage.init(named: "camera"), forState: .Normal)
+        //frontBackSwitchBtn.contentMode = .ScaleAspectFill
+        self.view.bringSubviewToFront(frontBackSwitchBtn)
+        
+        // Init Scroll Menu
+        ScrollMenuInit.setUpACPScroll(scrollMenu, inUIViewController: self)
+        //self.view.bringSubviewToFront(scrollMenu)
         
         // Start actually capturing
         session.startRunning()
+    }
+    
+    func hackFixOrientation(img: UIImage) -> CGImageRef {
+        let debug = CIImage(CGImage: img.CGImage!).imageByApplyingOrientation(6)
+        let context = CIContext()
+        let fixedImg = context.createCGImage(debug, fromRect: debug.extent)
+        return fixedImg
+    }
+    
+    func detectFaces(imageBuffer: CVImageBufferRef) {
+        CVPixelBufferLockBaseAddress(imageBuffer, 0)
+        
+        let height = CVPixelBufferGetHeight(imageBuffer)
+        let ciImage = CIImage(CVImageBuffer: imageBuffer)
+        let faces = faceDetector.featuresInImage(ciImage,
+            options:[CIDetectorImageOrientation: 6]) as! [CIFaceFeature]
+        
+        // print("\(faces.count) faces detected")
+        
+        // Draw rectangles on detected faces
+        UIGraphicsBeginImageContext(ciImage.extent.size)
+        let context = UIGraphicsGetCurrentContext()
+        
+        // Set line properties color and width
+        CGContextSetLineWidth(context, 30)
+        CGContextSetStrokeColorWithColor(context, UIColor.redColor().CGColor)
+        
+        var T = CGAffineTransformIdentity
+        T = CGAffineTransformScale(T, 1, -1)
+        T = CGAffineTransformTranslate(T, 0, -CGFloat(height))
+        
+        for face in faces {
+            let faceLoc = CGRectApplyAffineTransform(face.bounds, T)
+            //CGContextAddEllipseInRect(context, face.bounds)
+            
+            //dogFace = dogFace?.imageRotatedByDegrees(90, flip: false)
+            CGContextDrawImage(context, faceLoc, dogFace.CGImage)
+        }
+        
+        CGContextStrokePath(context)
+        
+        let drawnFaces = UIGraphicsGetImageFromCurrentImageContext()
+        UIGraphicsEndImageContext()
+        
+        CVPixelBufferUnlockBaseAddress(imageBuffer, 0)
+        
+        
+        // Send to main queue to update UI
+        dispatch_async(dispatch_get_main_queue()) {
+            self.processedLayer.contents = self.hackFixOrientation(drawnFaces)
+        }
     }
     
     func colorFilter(imageBuffer: CVImageBufferRef) {
@@ -89,13 +212,15 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
         let height = CVPixelBufferGetHeight(imageBuffer)
         let bytesPerRow = CVPixelBufferGetBytesPerRow(imageBuffer)
         
+        var blueValue = UInt8((1.0 + sin(Double(frameNo) / 10)) * 0.5 * 255)
+        
         for _ in 0 ..< height {
             var idx = 0
             for _ in 0 ..< width {
-                pixels[idx    ] = 0 // Blue
-//                pixels[idx + 1] = 0 // Green
-//                pixels[idx + 2] = 0 // Red
-//                pixels[idx + 3] = 0 // Alpha
+                pixels[idx    ] = blueValue // Blue
+                //                pixels[idx + 1] = 0 // Green
+                //                pixels[idx + 2] = 0 // Red
+                //                pixels[idx + 3] = 0 // Alpha
                 idx += 4
             }
             pixels += bytesPerRow
@@ -110,9 +235,9 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
         CVPixelBufferUnlockBaseAddress(imageBuffer, 0)
         
         dispatch_async(dispatch_get_main_queue()) {
+            //UIImage(CGImage: cgImage)
             self.processedLayer.contents = cgImage
         }
-        processedLayer.contents = cgImage
     }
     
     // Method that receives the frame buffers
@@ -121,16 +246,67 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
         if(isProcessing) {
             guard let frameBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
             
-//            let frameBuffer = CMSampleBufferGetImageBuffer(sampleBuffer)
-//            if frameBuffer = nil {
-//                return
-//            }
-            colorFilter(frameBuffer)
-            
+            //            let frameBuffer = CMSampleBufferGetImageBuffer(sampleBuffer)
+            //            if frameBuffer = nil {
+            //                return
+            //            }
+            //colorFilter(frameBuffer)
+            //detectFaces(frameBuffer)
+            itemSelected == 3 ? colorFilter(frameBuffer) : detectFaces(frameBuffer)
+            frameNo += 1
         }
         
     }
-
-
+    
 }
 
+// function used to deal with UIImage
+extension UIImage {
+    public func imageRotatedByDegrees(degrees: CGFloat, flip: Bool) -> UIImage {
+        let radiansToDegrees: (CGFloat) -> CGFloat = {
+            return $0 * (180.0 / CGFloat(M_PI))
+        }
+        let degreesToRadians: (CGFloat) -> CGFloat = {
+            return $0 / 180.0 * CGFloat(M_PI)
+        }
+        
+        // calculate the size of the rotated view's containing box for our drawing space
+        let rotatedViewBox = UIView(frame: CGRect(origin: CGPointZero, size: size))
+        let t = CGAffineTransformMakeRotation(degreesToRadians(degrees));
+        rotatedViewBox.transform = t
+        let rotatedSize = rotatedViewBox.frame.size
+        
+        // Create the bitmap context
+        UIGraphicsBeginImageContext(rotatedSize)
+        let bitmap = UIGraphicsGetCurrentContext()
+        
+        // Move the origin to the middle of the image so we will rotate and scale around the center.
+        CGContextTranslateCTM(bitmap, rotatedSize.width / 2.0, rotatedSize.height / 2.0);
+        
+        //   // Rotate the image context
+        CGContextRotateCTM(bitmap, degreesToRadians(degrees));
+        
+        // Now, draw the rotated/scaled image into the context
+        var yFlip: CGFloat
+        
+        if(flip){
+            yFlip = CGFloat(-1.0)
+        } else {
+            yFlip = CGFloat(1.0)
+        }
+        
+        CGContextScaleCTM(bitmap, yFlip, -1.0)
+        CGContextDrawImage(bitmap, CGRectMake(-size.width / 2, -size.height / 2, size.width, size.height), CGImage)
+        
+        let newImage = UIGraphicsGetImageFromCurrentImageContext()
+        UIGraphicsEndImageContext()
+        
+        return newImage
+    }
+}
+
+extension ViewController : ACPScrollDelegate {
+    func scrollMenu(menu: ACPScrollMenu!, didSelectIndex selectedIndex: Int) {
+        itemSelected = selectedIndex
+    }
+}

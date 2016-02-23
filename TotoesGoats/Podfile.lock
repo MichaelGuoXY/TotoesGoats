@@ -1,0 +1,10 @@
+PODS:
+  - ACPScrollMenu (1.1.0)
+
+DEPENDENCIES:
+  - ACPScrollMenu
+
+SPEC CHECKSUMS:
+  ACPScrollMenu: 31cc42291288e669d6f0c1bd7c7146e141a76b76
+
+COCOAPODS: 0.39.0
