@@ -12,6 +12,7 @@
 
 + (void)setUpACPScroll: (ACPScrollMenu *) scrollMenu inUIViewController: (UIViewController*) thisVC{
     NSMutableArray *array = [[NSMutableArray alloc] init];
+    NSArray *names = [[NSArray alloc] initWithObjects:@"Face", @"Blink", @"Smile", @"Gradient", nil];
     for (int i = 1; i < 5; i++)
     {
         NSString *imgName = [NSString stringWithFormat:@"%d.png", i];
@@ -25,7 +26,7 @@
         //Item working with blocks
         ACPItem *item = [[ACPItem alloc] initACPItem:[UIImage imageNamed:@"bg.png"]
                                            iconImage:[UIImage imageNamed:imgName]
-                                               label:[NSString stringWithFormat:@"Test%d", i]
+                                               label:[names objectAtIndex:i-1]
                                            andAction: ^(ACPItem *item) {
                                                
                                                NSLog(@"Block called! %d", i);

@@ -25,6 +25,8 @@
 		E04E8DE81C78E47100D0CA9A /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = E04E8DE61C78E47100D0CA9A /* Main.storyboard */; };
 		E04E8DEA1C78E47100D0CA9A /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E04E8DE91C78E47100D0CA9A /* Assets.xcassets */; };
 		E04E8DED1C78E47100D0CA9A /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = E04E8DEB1C78E47100D0CA9A /* LaunchScreen.storyboard */; };
+		E0C8D3DB1C7D42C100C06F42 /* eye.png in Resources */ = {isa = PBXBuildFile; fileRef = E0C8D3DA1C7D42C100C06F42 /* eye.png */; };
+		E0C8D3DD1C7D448C00C06F42 /* laugh.png in Resources */ = {isa = PBXBuildFile; fileRef = E0C8D3DC1C7D448C00C06F42 /* laugh.png */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -52,6 +54,8 @@
 		E04E8DE91C78E47100D0CA9A /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		E04E8DEC1C78E47100D0CA9A /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		E04E8DEE1C78E47100D0CA9A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		E0C8D3DA1C7D42C100C06F42 /* eye.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = eye.png; sourceTree = "<group>"; };
+		E0C8D3DC1C7D448C00C06F42 /* laugh.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = laugh.png; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -86,6 +90,8 @@
 		E01F42E81C7BED6C002A2503 /* ScrollMenuRes */ = {
 			isa = PBXGroup;
 			children = (
+				E0C8D3DC1C7D448C00C06F42 /* laugh.png */,
+				E0C8D3DA1C7D42C100C06F42 /* eye.png */,
 				E01F430D1C7C0907002A2503 /* camera.png */,
 				E00C37FB1C794F5A00098A13 /* dog.png */,
 				E01F42F11C7BEF4B002A2503 /* bg.png */,
@@ -206,9 +212,11 @@
 				E01F43001C7BF67F002A2503 /* 1s.png in Resources */,
 				E01F43021C7BF67F002A2503 /* 2s.png in Resources */,
 				E01F430E1C7C0907002A2503 /* camera.png in Resources */,
+				E0C8D3DB1C7D42C100C06F42 /* eye.png in Resources */,
 				E01F42FF1C7BF67F002A2503 /* 1.png in Resources */,
 				E04E8DEA1C78E47100D0CA9A /* Assets.xcassets in Resources */,
 				E01F43071C7BFCF0002A2503 /* 4.png in Resources */,
+				E0C8D3DD1C7D448C00C06F42 /* laugh.png in Resources */,
 				E01F43081C7BFCF0002A2503 /* 3s.png in Resources */,
 				E04E8DE81C78E47100D0CA9A /* Main.storyboard in Resources */,
 			);

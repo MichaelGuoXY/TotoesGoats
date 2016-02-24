@@ -50,7 +50,7 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
         //Get new input
         var newCamera : AVCaptureDevice
         let devices = AVCaptureDevice.devicesWithMediaType(AVMediaTypeVideo) as! [AVCaptureDevice]
-
+        
         if(currentCameraInput.device.position == .Back)
         {
             newCamera = devices.filter({ (dev) -> Bool in dev.position == .Front}).first!
@@ -82,6 +82,16 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
     
     lazy var dogFace : UIImage! = {
         let path = NSBundle.mainBundle().pathForResource("dog", ofType: "png")!
+        return UIImage(contentsOfFile: path)
+    }()
+    
+    lazy var eyeImg : UIImage! = {
+        let path = NSBundle.mainBundle().pathForResource("eye", ofType: "png")!
+        return UIImage(contentsOfFile: path)
+    }()
+    
+    lazy var laughImg : UIImage! = {
+        let path = NSBundle.mainBundle().pathForResource("laugh", ofType: "png")!
         return UIImage(contentsOfFile: path)
     }()
     
@@ -130,6 +140,7 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
         assert(session.canAddOutput(output))
         session.addOutput(output)
         
+        
         //        // Button
         //        self.view.bringSubviewToFront(button)
         //        button.layer.cornerRadius = button.frame.width / 2.0
@@ -163,43 +174,86 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
         
         let height = CVPixelBufferGetHeight(imageBuffer)
         let ciImage = CIImage(CVImageBuffer: imageBuffer)
+        
         let faces = faceDetector.featuresInImage(ciImage,
-            options:[CIDetectorImageOrientation: 6]) as! [CIFaceFeature]
+            options:[CIDetectorImageOrientation: 6, CIDetectorSmile : true, CIDetectorEyeBlink : true]) as! [CIFaceFeature]
         
-        // print("\(faces.count) faces detected")
-        
-        // Draw rectangles on detected faces
-        UIGraphicsBeginImageContext(ciImage.extent.size)
-        let context = UIGraphicsGetCurrentContext()
-        
-        // Set line properties color and width
-        CGContextSetLineWidth(context, 30)
-        CGContextSetStrokeColorWithColor(context, UIColor.redColor().CGColor)
-        
-        var T = CGAffineTransformIdentity
-        T = CGAffineTransformScale(T, 1, -1)
-        T = CGAffineTransformTranslate(T, 0, -CGFloat(height))
-        
-        for face in faces {
-            let faceLoc = CGRectApplyAffineTransform(face.bounds, T)
-            //CGContextAddEllipseInRect(context, face.bounds)
+        print("\(faces.count) faces detected")
+        dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0) , {
+            // Draw rectangles on detected faces
+            UIGraphicsBeginImageContext(ciImage.extent.size)
+            let context = UIGraphicsGetCurrentContext()
             
-            //dogFace = dogFace?.imageRotatedByDegrees(90, flip: false)
-            CGContextDrawImage(context, faceLoc, dogFace.CGImage)
-        }
-        
-        CGContextStrokePath(context)
-        
-        let drawnFaces = UIGraphicsGetImageFromCurrentImageContext()
-        UIGraphicsEndImageContext()
-        
-        CVPixelBufferUnlockBaseAddress(imageBuffer, 0)
-        
-        
-        // Send to main queue to update UI
-        dispatch_async(dispatch_get_main_queue()) {
+            // Set line properties color and width
+            CGContextSetLineWidth(context, 30)
+            CGContextSetStrokeColorWithColor(context, UIColor.redColor().CGColor)
+            
+            var T = CGAffineTransformIdentity
+            T = CGAffineTransformScale(T, 1, -1)
+            T = CGAffineTransformTranslate(T, 0, -CGFloat(height))
+            
+            
+            for face in faces {
+                switch(self.itemSelected) {
+                case 0:
+                    //let faceLoc = CGRectApplyAffineTransform(face.bounds, T)
+                    
+                    CGContextAddEllipseInRect(context, face.bounds)
+                    
+                    //dogFace = dogFace?.imageRotatedByDegrees(90, flip: false)
+                    CGContextDrawImage(context, face.bounds, self.dogFace.CGImage)
+                    break;
+                case 1:
+                    if face.leftEyeClosed && face.rightEyeClosed {
+                        let width = face.bounds.width
+                        let xl = face.leftEyePosition.x
+                        let yl = face.leftEyePosition.y
+                        let xr = face.rightEyePosition.x
+                        let yr = face.rightEyePosition.y
+                        let lEyeLoc = CGRectMake(xl - width/8, yl - width/8, width/4, width/4)
+                        let rEyeLoc = CGRectMake(xr - width/8, yr - width/8, width/4, width/4)
+                        CGContextDrawImage(context, lEyeLoc, self.eyeImg.CGImage)
+                        CGContextDrawImage(context, rEyeLoc, self.eyeImg.CGImage)
+                    }
+                    break;
+                case 2:
+                    if face.hasSmile {
+                        let width = face.bounds.width
+                        let x = face.mouthPosition.x
+                        let y = face.mouthPosition.y
+                        let mouthLoc = CGRectMake(x - width/4, y - width/3, width * 1/2, width * 2/3)
+                        //dogFace = dogFace?.imageRotatedByDegrees(90, flip: false)
+                        CGContextDrawImage(context, mouthLoc, self.laughImg.CGImage)
+                    }
+                    break;
+                default:
+                    break;
+                }
+            }
+            
+            CGContextStrokePath(context)
+            
+            let drawnFaces = UIGraphicsGetImageFromCurrentImageContext()
+            
+            if(drawnFaces == nil) {
+                NSLog("nil found hello")
+            }
+            UIGraphicsEndImageContext()
+            
+            CVPixelBufferUnlockBaseAddress(imageBuffer, 0)
+            
             self.processedLayer.contents = self.hackFixOrientation(drawnFaces)
-        }
+            
+            // Send to main queue to update UI
+            dispatch_async(dispatch_get_main_queue()) {
+                if(drawnFaces == nil) {
+                    NSLog("nil found")
+                }
+                else {
+                    self.processedLayer.contents = self.hackFixOrientation(drawnFaces)
+                }
+            }
+        })
     }
     
     func colorFilter(imageBuffer: CVImageBufferRef) {
@@ -212,15 +266,17 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
         let height = CVPixelBufferGetHeight(imageBuffer)
         let bytesPerRow = CVPixelBufferGetBytesPerRow(imageBuffer)
         
-        var blueValue = UInt8((1.0 + sin(Double(frameNo) / 10)) * 0.5 * 255)
+        let blueValue = UInt8((1.0 + sin(Double(frameNo) / 10)) * 0.5 * 255)
+//        let greenValue = UInt8((1.0 + sin(Double(frameNo) / 10)) * 0.5 * 255)
+//        let redValue = UInt8((1.0 + sin(Double(frameNo) / 10)) * 0.5 * 255)
         
         for _ in 0 ..< height {
             var idx = 0
             for _ in 0 ..< width {
                 pixels[idx    ] = blueValue // Blue
-                //                pixels[idx + 1] = 0 // Green
-                //                pixels[idx + 2] = 0 // Red
-                //                pixels[idx + 3] = 0 // Alpha
+//                pixels[idx + 1] = greenValue // Green
+//                pixels[idx + 2] = redValue // Red
+//                pixels[idx + 3] = 0 // Alpha
                 idx += 4
             }
             pixels += bytesPerRow
@@ -263,9 +319,9 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
 // function used to deal with UIImage
 extension UIImage {
     public func imageRotatedByDegrees(degrees: CGFloat, flip: Bool) -> UIImage {
-        let radiansToDegrees: (CGFloat) -> CGFloat = {
-            return $0 * (180.0 / CGFloat(M_PI))
-        }
+        //        let radiansToDegrees: (CGFloat) -> CGFloat = {
+        //            return $0 * (180.0 / CGFloat(M_PI))
+        //        }
         let degreesToRadians: (CGFloat) -> CGFloat = {
             return $0 / 180.0 * CGFloat(M_PI)
         }
